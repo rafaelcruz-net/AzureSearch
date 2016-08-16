@@ -23,7 +23,7 @@ namespace AzureSearch.Controllers
         public ActionResult SaveDocument(Product model)
         {
             string searchServiceName = "demo-search";
-            string apiKey = "4E35E298B732E7FAC522734572CD05A5";
+            string apiKey = "api-key";
 
             SearchServiceClient serviceClient = new SearchServiceClient(searchServiceName, new SearchCredentials(apiKey));
             SearchIndexClient indexClient = serviceClient.Indexes.GetClient("product");
@@ -49,7 +49,7 @@ namespace AzureSearch.Controllers
         {
 
             string searchServiceName = "demo-search";
-            string apiKey = "4E35E298B732E7FAC522734572CD05A5";
+            string apiKey = "api-key";
 
             SearchServiceClient serviceClient = new SearchServiceClient(searchServiceName, new SearchCredentials(apiKey));
             SearchIndexClient indexClient = serviceClient.Indexes.GetClient("product");
@@ -64,6 +64,27 @@ namespace AzureSearch.Controllers
             return View("Search", response.Results.Select(x => x.Document).ToList());
 
         }
+
+        public ActionResult Suggest(string term)
+        {
+
+            string searchServiceName = "demo-search";
+            string apiKey = "api-key";
+            string suggestName = "namesuggestion";
+
+            SearchServiceClient serviceClient = new SearchServiceClient(searchServiceName, new SearchCredentials(apiKey));
+            SearchIndexClient indexClient = serviceClient.Indexes.GetClient("product");
+
+            DocumentSuggestResult suggestion = indexClient.Documents.Suggest(term, suggestName);
+
+            return Json(new
+            {
+                Result = suggestion.Results.Select(x => x.Text).ToArray()
+            }, JsonRequestBehavior.AllowGet);
+
+        }
+
+
 
 
 

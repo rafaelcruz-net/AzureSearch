@@ -6,6 +6,27 @@
 
 @model IList<AzureSearch.Models.Product>
 
+@section scripts
+{
+    <script>
+        $(function () {
+
+            $("#searchText").autocomplete({
+                minLength: 2,
+                source: function (request, response) {
+                    $.getJSON("http://localhost:11567/Home/Suggest", {
+                        term: request.term
+                    }, function (data) {
+                        response(data.Result);
+                    });
+                },
+            });
+
+        })
+    </script>
+
+}
+
 <h2>Search</h2>
 <br />
 <div class="row">
@@ -44,7 +65,7 @@
                     <tr>
                         <td>@product.Id</td>
                         <td>@product.Name</td>
-                        <td>@String.Join(",",product.Categoria.ToArray())</td>
+                        <td>@String.Join(",", product.Categoria.ToArray())</td>
                         <td>R$ @product.Preco.ToString("N2")</td>
                         <td>@product.Descricao</td>
                     </tr>
@@ -54,3 +75,5 @@
     }
 
 </div>
+
+
