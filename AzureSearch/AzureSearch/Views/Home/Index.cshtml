@@ -2,32 +2,29 @@
     ViewBag.Title = "Home Page";
 }
 
-@model AzureSearch.Models.Product
+@model AzureSearch.Models.Answers
 
 <br />
 
-<h2>Indexar novo Produto</h2>
+<h2>Base de conhecimento</h2>
 <br />
 <div class="row">
 
-    @using (Html.BeginForm("SaveDocument", "Home", FormMethod.Post, new { @class="form-horizontal" }))
+    @using (Html.BeginForm("SaveDocument", "Home", FormMethod.Post, new { @class = "form-horizontal" }))
     {
         <div class="form-group">
-            <label>Nome do Produto</label>
-            @Html.TextBoxFor(x => x.Name, new { @class="form-control" })
+            <label>Titulo</label>
+            @Html.TextBoxFor(x => x.Title, new { @class = "form-control" })
+        </div>
+        <div class="form-group">
+            <label>Texto Explicativo</label>
+            @Html.TextAreaFor(x => x.ExplainText, new { @class = "form-control" })
         </div>
         <div class="form-group">
             <label>Categoria</label>
-            @Html.TextBoxFor(x => x.Categoria, new { @class = "form-control" })
+            @Html.TextBoxFor(x => x.Tags, new { @class = "form-control" })
         </div>
-        <div class="form-group">
-            <label>Preco</label>
-            @Html.TextBoxFor(x => x.Preco, new { @class = "form-control" })
-        </div>
-        <div class="form-group">
-            <label>Descrição</label>
-            @Html.TextAreaFor(x => x.Descricao, new { @class = "form-control" })
-        </div>
+
         <button type="submit" class="btn btn-default">Enviar</button>
     }
 

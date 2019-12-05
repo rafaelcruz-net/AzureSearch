@@ -4,6 +4,7 @@ using Microsoft.Azure.Search.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 
@@ -20,19 +21,47 @@ namespace AzureSearch.Controllers
         }
 
         [HttpPost]
-        public ActionResult SaveDocument(Product model)
+        public async Task<ActionResult> SaveDocument(Answers model)
         {
-            string searchServiceName = "demo-search";
-            string apiKey = "api-key";
+            string searchServiceName = "demo-icatu-azure-search";
+            string apiKey = "F8096514640A1CE105729B47582E93BA";
 
             SearchServiceClient serviceClient = new SearchServiceClient(searchServiceName, new SearchCredentials(apiKey));
-            SearchIndexClient indexClient = serviceClient.Indexes.GetClient("product");
+            ISearchIndexClient indexClient = serviceClient.Indexes.GetClient("icatu-demo-search");
+
+
+            var tags = model.Tags.FirstOrDefault().ToString().Split(',').ToList();
+
+            model.Tags.Clear();
+            model.Tags.AddRange(tags);
+
+            var index = new IndexAction<Answers>[]
+            {
+                IndexAction.Upload(model)
+            };
 
             //Criando o documento a ser indexado
-            var document = IndexBatch.Upload(new Product[] { model });
+            var batch = IndexBatch.New(index);
 
             //Atualizado o indice com o novo documento
-            indexClient.Documents.Index(document);
+            try
+            {
+                await indexClient.Documents.IndexAsync(batch);
+            }
+            catch (IndexBatchException e)
+            {
+                // Sometimes when your Search service is under load, indexing will fail for some of the documents in
+                // the batch. Depending on your application, you can take compensating actions like delaying and
+                // retrying. For this simple demo, we just log the failed document keys and continue.
+                Console.WriteLine(
+                    "Failed to index some of the documents: {0}",
+                    String.Join(", ", e.IndexingResults.Where(r => !r.Succeeded).Select(r => r.Key)));
+            }
+            catch (System.Exception ex)
+            {
+                throw ex;
+
+            }
 
             return View("Index");
 
@@ -45,37 +74,64 @@ namespace AzureSearch.Controllers
         }
 
         [HttpPost]
-        public ActionResult Search(string searchText, string filter = null)
+        public async Task<ActionResult> Search(string searchText, string filter = null)
         {
 
-            string searchServiceName = "demo-search";
-            string apiKey = "api-key";
+            string searchServiceName = "demo-icatu-azure-search";
+            string apiKey = "F8096514640A1CE105729B47582E93BA";
 
             SearchServiceClient serviceClient = new SearchServiceClient(searchServiceName, new SearchCredentials(apiKey));
-            SearchIndexClient indexClient = serviceClient.Indexes.GetClient("product");
+            ISearchIndexClient indexClient = serviceClient.Indexes.GetClient("icatu-demo-search");
 
             var sp = new SearchParameters();
 
             if (!String.IsNullOrEmpty(filter))
                 sp.Filter = filter;
 
-            DocumentSearchResult<Product> response = indexClient.Documents.Search<Product>(searchText, sp);
+            var parameters = new SearchParameters
+            {
+                // Enter Hotel property names into this list so only these values will be returned.
+                // If Select is empty, all values will be returned, which can be inefficient.
+                IncludeTotalResultCount = true,
+                ScoringProfile = "ScoringTitle",
+                Top = 3,
+                HighlightFields = new List<string> { "ExplainText", "Title" },
+                HighlightPreTag = "<font style=\"color:blue; background-color:yellow;\">",
+                HighlightPostTag = "</font>",
+                QueryType = QueryType.Full,
+                SearchMode = SearchMode.Any
 
-            return View("Search", response.Results.Select(x => x.Document).ToList());
+            };
+
+            DocumentSearchResult<Answers> response = await indexClient.Documents.SearchAsync<Answers>(searchText, parameters);
+
+            var answer = new List<Answers>();
+
+            foreach (var item in response.Results)
+            {
+                answer.Add(new Answers()
+                {
+                    Title = item.Document.Title,
+                    ExplainText = item.Document.ExplainText,
+                    Tags = item.Document.Tags
+                });
+            }
+
+            return View("Search", answer);
 
         }
 
-        public ActionResult Suggest(string term)
+        public async Task<ActionResult> Suggest(string term)
         {
 
-            string searchServiceName = "demo-search";
-            string apiKey = "api-key";
+            string searchServiceName = "demo-icatu-azure-search";
+            string apiKey = "F8096514640A1CE105729B47582E93BA";
             string suggestName = "namesuggestion";
 
             SearchServiceClient serviceClient = new SearchServiceClient(searchServiceName, new SearchCredentials(apiKey));
-            SearchIndexClient indexClient = serviceClient.Indexes.GetClient("product");
+            ISearchIndexClient indexClient = serviceClient.Indexes.GetClient("icatu-demo-search");
 
-            DocumentSuggestResult suggestion = indexClient.Documents.Suggest(term, suggestName);
+            var suggestion = await indexClient.Documents.SuggestAsync(term, suggestName);
 
             return Json(new
             {
@@ -83,6 +139,8 @@ namespace AzureSearch.Controllers
             }, JsonRequestBehavior.AllowGet);
 
         }
+
+        
 
 
 

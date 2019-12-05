@@ -6,13 +6,11 @@ using System.Web;
 
 namespace AzureSearch.Models
 {
-    [SerializePropertyNamesAsCamelCase]
-    public class Product
+    public class Answers
     {
-        public String Id { get; set; } = Guid.NewGuid().ToString();
-        public String Name { get; set; }
-        public List<String> Categoria { get; set; } = new List<string>(); 
-        public Double Preco { get; set; }
-        public String Descricao { get; set; }
+        public String id { get; set; } = Guid.NewGuid().ToString();
+        public String Title { get; set; }
+        public List<String> Tags { get; set; } = new List<string>(); 
+        public String ExplainText { get; set; }
     }
 }
